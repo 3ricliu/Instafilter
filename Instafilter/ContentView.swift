@@ -13,7 +13,10 @@ import CoreImage.CIFilterBuiltins
 struct ContentView: View {
   @State private var image: Image?
   @State private var filterIntensity = 0.5
+  @State private var filterRadius: Double = 100
+  @State private var filterScale: Double = 10
   
+  @State private var currentFilterName = "Sepia Tone"
   @State private var showingFilterSheet = false
   @State private var showingImagePicker = false
   @State private var inputImage: UIImage?
@@ -31,6 +34,24 @@ struct ContentView: View {
       },
       set: {
         self.filterIntensity = $0
+        self.applyProcessing()
+      }
+    )
+    let radius = Binding<Double>(
+      get: {
+        self.filterRadius
+      },
+      set: {
+        self.filterRadius = $0
+        self.applyProcessing()
+      }
+    )
+    let scale = Binding<Double>(
+      get: {
+        self.filterScale
+      },
+      set: {
+        self.filterScale = $0
         self.applyProcessing()
       }
     )
@@ -53,11 +74,23 @@ struct ContentView: View {
         .onTapGesture {
           self.showingImagePicker = true
         }
+        Text(currentFilterName)
+          .padding(.top)
+        
         
         HStack {
           Text("Intensity")
           Slider(value: intensity)
         }.padding(.vertical)
+        HStack {
+          Text("Radius")
+          Slider(value: radius)
+        }.padding(.vertical)
+        HStack {
+          Text("Scale")
+          Slider(value: scale)
+        }.padding(.vertical)
+        
         
         HStack {
           Button("Change Filter") {
@@ -93,13 +126,13 @@ struct ContentView: View {
       }
       .actionSheet(isPresented: $showingFilterSheet) {
         ActionSheet(title: Text("Select a filter"), buttons: [
-          .default(Text("Crystallize")) { self.setFilter(CIFilter.crystallize()) },
-          .default(Text("Edges")) { self.setFilter(CIFilter.edges()) },
-          .default(Text("Gaussian Blur")) { self.setFilter(CIFilter.gaussianBlur()) },
-          .default(Text("Pixellate")) { self.setFilter(CIFilter.pixellate()) },
-          .default(Text("Sepia Tone")) { self.setFilter(CIFilter.sepiaTone()) },
-          .default(Text("Unsharp Mask")) { self.setFilter(CIFilter.unsharpMask()) },
-          .default(Text("Vignette")) { self.setFilter(CIFilter.vignette()) },
+          .default(Text("Crystallize")) { self.setFilter(CIFilter.crystallize(), "Crystallize") },
+          .default(Text("Edges")) { self.setFilter(CIFilter.edges(), "Edges") },
+          .default(Text("Gaussian Blur")) { self.setFilter(CIFilter.gaussianBlur(), "Gaussian Blur") },
+          .default(Text("Pixellate")) { self.setFilter(CIFilter.pixellate(), "Pixellate") },
+          .default(Text("Sepia Tone")) { self.setFilter(CIFilter.sepiaTone(), "Sepia Tone") },
+          .default(Text("Unsharp Mask")) { self.setFilter(CIFilter.unsharpMask(), "Unsharp Mask") },
+          .default(Text("Vignette")) { self.setFilter(CIFilter.vignette(), "Vignette") },
           .cancel()
         ])
       }
@@ -120,9 +153,9 @@ struct ContentView: View {
     let inputKeys = currentFilter.inputKeys
     if inputKeys.contains(kCIInputIntensityKey) { currentFilter.setValue(filterIntensity, forKey: kCIInputIntensityKey) }
     
-    if inputKeys.contains(kCIInputRadiusKey) { currentFilter.setValue(filterIntensity * 200, forKey: kCIInputRadiusKey) }
+    if inputKeys.contains(kCIInputRadiusKey) { currentFilter.setValue(filterRadius, forKey: kCIInputRadiusKey) }
     
-    if inputKeys.contains(kCIInputScaleKey) { currentFilter.setValue(filterIntensity * 10, forKey: kCIInputScaleKey)}
+    if inputKeys.contains(kCIInputScaleKey) { currentFilter.setValue(filterScale, forKey: kCIInputScaleKey)}
 
     guard let outputImage = currentFilter.outputImage
     else { return }
@@ -134,8 +167,9 @@ struct ContentView: View {
     }
   }
   
-  func setFilter(_ filter: CIFilter) {
+  func setFilter(_ filter: CIFilter, _ name: String) {
     self.currentFilter = filter
+    self.currentFilterName = name
     loadImage()
   }
 }
