@@ -18,6 +18,8 @@ struct ContentView: View {
   @State private var showingImagePicker = false
   @State private var inputImage: UIImage?
   @State private var processedImage: UIImage?
+  
+  @State private var showingSaveAlert = false
 
   @State var currentFilter: CIFilter = CIFilter.sepiaTone()
   let context = CIContext()
@@ -65,7 +67,10 @@ struct ContentView: View {
           Spacer()
           
           Button("Save") {
-            guard let processedImage = self.processedImage else { return }
+            guard let processedImage = self.processedImage else {
+              self.showingSaveAlert.toggle()
+              return
+            }
             
             let imageSaver = ImageSaver()
             
@@ -97,6 +102,9 @@ struct ContentView: View {
           .default(Text("Vignette")) { self.setFilter(CIFilter.vignette()) },
           .cancel()
         ])
+      }
+      .alert(isPresented: $showingSaveAlert) {
+        Alert(title: Text("Whoops"), message: Text("Please select a picture first!"), dismissButton: .default(Text("👌🏼")))
       }
     }
   }
